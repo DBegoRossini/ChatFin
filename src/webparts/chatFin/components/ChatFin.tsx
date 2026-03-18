@@ -12,9 +12,9 @@ export interface IChatMessage {
   text: string;
 }
 
-export default function ChatFin(): React.ReactElement {
-  // URL do Webhook do n8n
+export default function ChatFin(props: IChatFinProps): React.ReactElement {
   const webhookUrl =
+    props.webhookUrl ||
     'https://impper.app.n8n.cloud/webhook/a957fcd4-1384-4ca6-81b7-1dd3fb8fff6c/chat';
 
   const [messages, setMessages] = React.useState<IChatMessage[]>([]);
@@ -22,7 +22,6 @@ export default function ChatFin(): React.ReactElement {
   const [input, setInput] = React.useState<string>('');
   const [sending, setSending] = React.useState<boolean>(false);
 
-  // Persistência de thread/session no browser
   const threadIdRef = React.useRef<string>(localStorage.getItem('n8n-thread-id') || '');
   const sessionIdRef = React.useRef<string>(
     localStorage.getItem('n8n-session-id') || crypto.randomUUID()
@@ -74,7 +73,6 @@ export default function ChatFin(): React.ReactElement {
         ? await response.json()
         : { reply: await response.text() };
 
-      // Atualiza thread/session se o n8n mandar de volta
       if (data?.threadId) {
         threadIdRef.current = data.threadId;
         localStorage.setItem('n8n-thread-id', data.threadId);
@@ -121,7 +119,6 @@ export default function ChatFin(): React.ReactElement {
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      // dispara submit do form
       void sendMessage(input);
       setInput('');
     }
@@ -132,7 +129,7 @@ export default function ChatFin(): React.ReactElement {
       <header className={styles.topbar}>
         <div className={styles.title}>
           <div className={styles.dot} />
-          <span>Chat Impper</span>
+          <span>{props.title || 'Chat Impper'}</span>
         </div>
 
         <span className={styles.status}>{status}</span>
@@ -155,7 +152,7 @@ export default function ChatFin(): React.ReactElement {
           <textarea
             value={input}
             rows={1}
-            placeholder="Pergunte qualquer coisa..."
+            placeholder={props.placeholder || 'Pergunte qualquer coisa...'}
             autoComplete="off"
             disabled={sending}
             onChange={(e) => setInput(e.target.value)}
