@@ -1,0 +1,21 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "18.20.5",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.24.0"
+    },
+    "version": "1.20.0",
+    "libraryName": "chat-fin",
+    "libraryId": "6ee92b75-4560-4ccf-8307-502d6d34a52d",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "chat-fin",
+    "solutionShortDescription": "chat-fin description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

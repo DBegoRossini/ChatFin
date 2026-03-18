@@ -1,0 +1,18 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "chat-fin-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/chatFin/ChatFinWebPart.js",
+          "manifest": "./src/webparts/chatFin/ChatFinWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "ChatFinWebPartStrings": "lib/webparts/chatFin/loc/{locale}.js"
+  }
+}
