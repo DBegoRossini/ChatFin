@@ -12,6 +12,12 @@ export interface IChatMessage {
   text: string;
 }
 
+interface IWebhookResponse {
+  reply?: string | null;
+  threadId?: string;
+  sessionId?: string;
+}
+
 export default function ChatFin(props: IChatFinProps): React.ReactElement {
   const webhookUrl =
     props.webhookUrl ||
@@ -33,22 +39,28 @@ export default function ChatFin(props: IChatFinProps): React.ReactElement {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length]);
 
-  const pickReplyText = (data: any): string => {
+  const pickReplyText = (data: unknown): string => {
     if (!data) return '';
     if (typeof data === 'string') return data;
-    return String(data.reply || '').trim();
+    if (typeof data === 'object' && data !== null && 'reply' in data) {
+      return String((data as IWebhookResponse).reply || '').trim();
+    }
+    return '';
   };
 
-  const appendMessage = (role: 'user' | 'bot', text: string) => {
+  const appendMessage = (role: 'user' | 'bot', text: string): void => {
     setMessages((prev) => [...prev, { role, text }]);
   };
 
-  const sendMessage = async (text: string) => {
+  const sendMessage = async (text: string): Promise<void> => {
     if (!text.trim() || sending) return;
 
     appendMessage('user', text);
     setSending(true);
     setStatus('Enviando...');
+
+    const currentThreadId = threadIdRef.current;
+    const currentSessionId = sessionIdRef.current;
 
     try {
       const response = await fetch(webhookUrl, {
@@ -56,8 +68,8 @@ export default function ChatFin(props: IChatFinProps): React.ReactElement {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chatInput: text,
-          sessionId: sessionIdRef.current,
-          threadId: threadIdRef.current
+          sessionId: currentSessionId,
+          threadId: currentThreadId
         })
       });
 
@@ -69,18 +81,21 @@ export default function ChatFin(props: IChatFinProps): React.ReactElement {
       }
 
       const contentType = response.headers.get('content-type') || '';
-      const data = contentType.indexOf('application/json')
-        ? await response.json()
+      const data: IWebhookResponse = contentType.includes('application/json')
+        ? (await response.json() as IWebhookResponse)
         : { reply: await response.text() };
 
-      if (data?.threadId) {
-        threadIdRef.current = data.threadId;
-        localStorage.setItem('n8n-thread-id', data.threadId);
+      const newThreadId = data.threadId;
+      const newSessionId = data.sessionId;
+
+      if (newThreadId) {
+        threadIdRef.current = newThreadId;
+        localStorage.setItem('n8n-thread-id', newThreadId);
       }
 
-      if (data?.sessionId) {
-        sessionIdRef.current = data.sessionId;
-        localStorage.setItem('n8n-session-id', data.sessionId);
+      if (newSessionId) {
+        sessionIdRef.current = newSessionId;
+        localStorage.setItem('n8n-session-id', newSessionId);
       }
 
       const reply = pickReplyText(data);
@@ -109,17 +124,17 @@ export default function ChatFin(props: IChatFinProps): React.ReactElement {
     }
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     const text = input;
     setInput('');
-    void sendMessage(text);
+    sendMessage(text).catch(() => undefined);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      void sendMessage(input);
+      sendMessage(input).catch(() => undefined);
       setInput('');
     }
   };
